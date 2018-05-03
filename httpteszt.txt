@@ -1,0 +1,101 @@
+﻿AZONOSÍTÁSsos API alapok
+-------------------------
+
+logikailag kell a működő alkalmazáshoz: 
+
+BACKEND:
+	nodeJs : az alap (de lehet PHP)
+	Database (Mongo Db, file db..etc), 
+	Autenthicáció (cookie, session, token)
+	Webserver(webkiszolgáló, ami küldözgeti vissza a fileokat, adatokat): pl express, v custom saját manuálisan irt, meteor...
+	CRUD: 
+	--> ez utóbbi kettő küldözgeti a válaszokat a requestekre
+
+FRONTEND:
+	Böngésző, a legtöbb embert eléri
+	Nyelv (HTML, JS, Pug), keretrendszer (Angular, React, stb...)
+	stílus oldalak: css
+	communikáció: 
+		HTTP: amikor új adatot kérek frissül az oldal, letölti azegész oldalt ismét
+			böngészö beállítja a kérést: fejlécben... lásd lentebb
+			kérés befut a nameserverre, a name server megnézi h az url hol van, melyik ip címen van a server
+			tovább dobja abba az irányba a kérést
+			a server megkapja a fejlécből kiolvassa h mit
+		
+		ajax (fantázia név): assincron, javascript, and xml = u.a. xml http request
+				lényege h a háttérben fut, assinkron módon, nem tölti le újra az egész oldalt, 
+				u.a. marad az oldal a választ java scripttel be tudom rakni csak a módosítást
+		a fenti kettő működése: requestet küld a Cliens (mindíg ő kezdeményezi a komm-t), a server összeállítja a választ, majd megküldi azt, majd bontja a kapcsolatot, hogy fölszabadítsa a sávot
+		ha sokan jönnek a weboldra, egyre lassabb lesz, elfogy a sávszéllesség (hacker támadás daydos). 
+		Csak akkor értesül a változásokról, ha a Cliens megkérdezi, pazarló, x másodpercenként küld kérést
+		
+		?  opcionálisan: websocket (pl Meteor): a kapcsolat nem bomlik, folyamatosan élő kommunikációs szál jön létre a Cliens és server. A Server tud szólni a Cliensnek ha változik vmi!
+			Push üzenet. Hátránya: h folyamatosan foglal egy sávszéllességet
+			8 másodpercenként küld egy throb-ot a server a Cliensnek, ebből a szívdobbanásból tudja h él még a kapcsolat, ha nincs visszajel, akkor úgy veszi h bezárták
+			a böngészőt, felszabídítja a sávszélességet.
+			érdemes csak a realtime részekhez használni, hogy takarékoskodjunk az erőforrásokkal
+
+-----------			
+Req HEADERS: KÉRÉS
+Accept: // milyen file formátumokat vár a böngésző
+Accept-Encoding: // milyen fajta tömörítéseket ismer a böngészö, ha a szerver valamelyiket támogatja akkor úgy küldi, ha nem akkor tömörítetelnenül küldi
+Accept-Language: // felsorolja a nyelveket, az elejéről indul, ha van olyan verzió, azt tölti be, ha nincs, a köv nyelvet.
+					hu-HU első nyelv, második nyelvjárás
+					fallback languages, ha nincs mindíg a következőt próbáljáa
+
+Cache-Control: max-age=0 u.a. no-cash // a böngésző oldalán el akarjuk-e tárolni vagy sem, mivel az index hir oldal, nem akarja h cashelje, v be lehet állítani h hény napra legyen a memóriába
+
+Connection: keep-alive // egy ideig kéri h fentartja a kapcsolatot
+
+Cookie: INX_CHECKER2=1; inx_checker2=1; _ga=GA1.2.1171663893.1523244013; __gfp_64b=v_Jq8Q61bjlCTTV1rFqsAlSdOul9HRc3tfTB5eHxkpz.O7; _goa3=eyJ1IjoiMTgwMzE0MjU5MTY4MTA0NTI0MjE0OSIsImgiOiJodS0yOC0xMDQuaG9zdGluZy5pbnRlcm5ldHBhcmsuaHUiLCJzIjoxNTIwMjg0Mjg4MTM5fQ==; _goa3TS=e30=; _iph_pcp=1; mobile_detect=desktop; PHPSESSID=p2v2mojejfseg8b0kq38442je7; _gid=GA1.2.695629777.1525338476; ident=5a9db27f8b8617102dc050ea; _gat=1; rp_init=1; _goa3TC=e30=; bm_last_load_status=NOT_BLOCKING; bm_monthly_unique=true; bm_daily_unique=true; bm_sample_frequency=100; passportHeader_4431553-2018-05-03_10_56_41=4
+Host: index.hu
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 // elküldi h milyen a böngészőm --> ebből tudom optimalizálni h milyen adatot küldök vissza
+
+
+RESPONSE HEADERS - VÁLASZ:
+Connection: keep-alive // elfogadja 
+Content-Encoding: gzip // milyen tömörítéssel
+Content-Type: text/html; charset=UTF-8 //milyen file-t, ilyen tömörítéssel küldött
+Date: Thu, 03 May 2018 09:08:03 GMT
+Server: nginx // server alkalmazás, olyan mind a NodeJs
+Set-Cookie: INX_CHECKER2=1; expires=Fri, 03-May-2019 09:07:58 GMT; Max-Age=31536000; path=/; domain=.index.hu // ha nem tiltottam le a böngészőben a cookie mentést, akkor ezeket lementi
+Set-Cookie: mobile_detect=desktop; expires=Thu, 10-May-2018 09:07:58 GMT; Max-Age=604800; path=/; domain=.index.hu
+Transfer-Encoding: chunked
+Vary: X-Device-Type,Accept-Encoding
+X-Cache-Status: HIT  // X - cutom data, amiket ők állítanak be
+X-Device-Type: desktop
+
+-------------------
+Új API választás:
+Back: Mongo, express, Authentikáció
+Front: Angular (weboldal kinézetét generálja, és model és kontroller is, adatokat lekér), css, http communikáció (+websocket esetleg)
+	AJAX
+	MVC: 	Model : nyers adat
+			View : a nézet, amit a felhasználó lát, bököd
+			Controller: ami összeköti a Modelt és View-t, leírja, h hogy működjön az alaklamzás (app componens) v egyes componensen (al componensek) , a typescript componens-ben, component.ts-ben.
+					megkapja a modelből az adatokat, majd kiküldi a view-ból
+	
+
+-------------------
+
+express backend
+
+Yellow\httpteszt>cd backend
+
+nmp i
+
+nodemon
+
+
+FRONTEND
+
+Yellow\httpteszt> mappában:
+
+ng new frontend
+
+futtatás fejelsztés alatt: ng serve open
+
+ha vége a fejlesztésnek:
+ng build prod:
+ ez elkészíti a js filokat egy DIST mappába (distributed), amiket be kell tenni majd a nodeJs backend PUBLIC mappájába, akkor egy serveren fut.
